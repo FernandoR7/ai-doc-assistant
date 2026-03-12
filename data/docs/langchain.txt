@@ -1,0 +1,2 @@
+LangChain é um framework para construir aplicações com modelos de linguagem.
+Ele permite criar chains, retrievers, agents e fluxos de RAG.
