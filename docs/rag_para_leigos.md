@@ -11,9 +11,23 @@ Ele funciona mais como alguem que:
 - encontra os trechos mais proximos do assunto
 - usa esses trechos para montar uma resposta
 
+## Que tipos de arquivo ele entende
+
+Hoje o projeto consegue ler:
+
+- arquivos de texto `.txt`
+- arquivos de documentacao `.md`
+- arquivos `.pdf`
+
+Isso significa que voce pode montar sua base com:
+
+- anotacoes simples
+- documentacao escrita em Markdown
+- apostilas e materiais em PDF
+
 ## Ideia principal
 
-Imagine que voce tem varios papeis com anotacoes sobre FastAPI, LangChain e outros temas.
+Imagine que voce tem varios papeis e arquivos com anotacoes sobre FastAPI, LangChain e outros temas.
 
 Quando alguem faz uma pergunta, o sistema:
 
@@ -43,7 +57,7 @@ Em linguagem simples:
 Voce pergunta:
 
 ```text
-O que é uma API?
+O que e FastAPI?
 ```
 
 O sistema vai:
@@ -52,6 +66,20 @@ O sistema vai:
 - encontrar o trecho que fala de FastAPI
 - mandar esse trecho para o modelo
 - devolver uma resposta usando esse texto
+
+## Como PDF e Markdown entram nisso
+
+Se voce colocar um arquivo Markdown:
+
+- ele sera lido como texto
+- o conteudo vira parte da base
+
+Se voce colocar um PDF:
+
+- o sistema tenta extrair o texto das paginas
+- esse texto tambem entra na base
+
+Entao, no fim, o projeto trata tudo como conteudo consultavel.
 
 ## Por que isso e melhor do que perguntar direto ao modelo
 
@@ -77,7 +105,7 @@ Com RAG:
 
 ## O que existe dentro deste projeto
 
-- uma pasta com textos
+- uma pasta com documentos
 - um sistema que transforma esses textos em numeros para comparacao
 - um banco que guarda esses numeros
 - um modelo que monta a resposta final
@@ -93,8 +121,12 @@ Em outras palavras:
 
 - lixo entra, lixo sai
 
+Isso tambem vale para PDF:
+
+- se o PDF tiver texto ruim ou for mal extraido, a resposta pode piorar
+
 ## Resumo final
 
 Este projeto e um assistente que consulta seus documentos antes de responder.
 Ele nao depende apenas de "memoria".
-Ele busca contexto e tenta responder com base no que encontrou.
+Ele busca contexto em `.txt`, `.md` e `.pdf` e tenta responder com base no que encontrou.

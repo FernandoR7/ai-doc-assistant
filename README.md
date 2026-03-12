@@ -1,128 +1,203 @@
 # AI Doc Assistant
 
-Assistente de perguntas e respostas com RAG local, construído com FastAPI, LangChain, ChromaDB e modelos Hugging Face.
+<div align="center">
 
-O projeto indexa documentos locais, recupera os trechos mais relevantes para uma pergunta e gera respostas com base nesse contexto. O foco aqui nao e so "fazer funcionar", mas deixar o fluxo observavel e depuravel de ponta a ponta.
+[![python](https://img.shields.io/badge/python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![fastapi](https://img.shields.io/badge/fastapi-api-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![langchain](https://img.shields.io/badge/langchain-rag-1C3C3C?style=flat-square)](https://www.langchain.com/)
+[![chromadb](https://img.shields.io/badge/chromadb-vector_store-ff6b35?style=flat-square)](https://www.trychroma.com/)
+[![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](./LICENSE)
 
-## Destaques
+</div>
 
-- API REST com FastAPI para consulta de documentos
-- pipeline de RAG local com embeddings, retrieval e geracao
-- ingestao com logs detalhados e validacoes de erro
-- observabilidade no fluxo inteiro: API, retriever, prompt e modelo
-- documentacao em tres niveis: tecnico, leigo e didatico
+<div align="center">
+  <h3>Local RAG assistant for querying TXT, Markdown, and PDF documents through a FastAPI API.</h3>
+</div>
 
-## Stack
+---
 
-- Python
-- FastAPI
-- LangChain
-- ChromaDB
-- sentence-transformers
-- Transformers
-- PyTorch
+## Quick Links
 
-## Arquitetura
+- [Introduction](#introduction)
+- [Features](#features)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Usage](#usage)
+- [API Endpoints](#api-endpoints)
+- [Observability](#observability)
+- [Documentation](#documentation)
+- [Roadmap](#roadmap)
+
+## Introduction
+
+AI Doc Assistant is a portfolio project focused on building a local Retrieval-Augmented Generation pipeline with clear architecture and practical debugging support.
+
+The application indexes documents stored in `data/docs`, transforms them into embeddings, persists them in ChromaDB, retrieves the most relevant chunks for a user question, and generates a final answer through a FastAPI API.
+
+### Why this project matters
+
+- It demonstrates a complete RAG workflow instead of a toy endpoint.
+- It supports multiple document formats: `.txt`, `.md`, and `.pdf`.
+- It was organized to be easy to inspect, debug, and evolve.
+- It includes technical, non-technical, and didactic documentation.
+
+## Features
+
+| Feature | Description |
+| --- | --- |
+| Multi-format ingestion | Indexes `.txt`, `.md`, and `.pdf` documents from `data/docs`. |
+| Local vector search | Uses sentence-transformer embeddings with ChromaDB for similarity retrieval. |
+| API interface | Exposes a FastAPI app with `/health` and `/ask` endpoints. |
+| End-to-end logging | Tracks ingestion, retrieval, prompt construction, generation, and request timing. |
+| Configurable ingestion | Supports custom patterns, chunk size, overlap, and database reset control. |
+| Portfolio-ready docs | Includes README plus technical, beginner-friendly, and didactic explanations. |
+
+## Architecture
 
 ```text
-Documentos locais
-    ->
-Ingestao e chunking
-    ->
+Documents (.txt, .md, .pdf)
+        |
+        v
+Ingestion + Chunking
+        |
+        v
 Embeddings
-    ->
+        |
+        v
 ChromaDB
-    ->
+        |
+        v
 Retriever
-    ->
-Prompt com contexto
-    ->
-LLM local
-    ->
-Resposta via API
+        |
+        v
+Prompt + Context
+        |
+        v
+Local LLM
+        |
+        v
+FastAPI Response
 ```
 
-## Fluxo do projeto
-
-### 1. Ingestao
-
-O script `scripts/ingest_docs.py`:
-
-- le os arquivos em `data/docs`
-- divide o texto em chunks
-- gera embeddings
-- persiste os vetores no ChromaDB
-- registra logs por etapa para facilitar debug
-
-### 2. Retrieval
-
-O módulo `app/vector_store.py` abre o banco vetorial e cria o retriever. Quando chega uma pergunta, o sistema busca os chunks semanticamente mais proximos.
-
-### 3. Geracao
-
-O módulo `app/rag_chain.py` monta o contexto recuperado, injeta esse contexto no prompt e envia o texto final para o modelo definido em `app/model.py`.
-
-### 4. API
-
-O endpoint `POST /ask` recebe a pergunta e devolve a resposta final.
-
-## Estrutura
+## Project Structure
 
 ```text
-app/
-  embeddings.py
-  logging_config.py
-  main.py
-  model.py
-  rag_chain.py
-  vector_store.py
-data/
-  docs/
-docs/
-  rag_tecnico.md
-  rag_para_leigos.md
-  rag_didatico_exemplos.md
-scripts/
-  ingest_docs.py
+AI project/
+|-- app/
+|   |-- embeddings.py
+|   |-- logging_config.py
+|   |-- main.py
+|   |-- model.py
+|   |-- rag_chain.py
+|   `-- vector_store.py
+|-- data/
+|   `-- docs/
+|       |-- fastapi.txt
+|       |-- langchain.txt
+|       |-- rag_notes.md
+|       `-- rag_reference.pdf
+|-- docs/
+|   |-- rag_didatico_exemplos.md
+|   |-- rag_para_leigos.md
+|   `-- rag_tecnico.md
+|-- scripts/
+|   `-- ingest_docs.py
+|-- requirements.txt
+`-- README.md
 ```
 
-## Como executar
+## Getting Started
 
-### 1. Criar e ativar o ambiente virtual
+### Prerequisites
+
+| Requirement | Version / Notes |
+| --- | --- |
+| Python | 3.11+ recommended |
+| OS | Tested on Windows PowerShell |
+| Dependencies | Installed from `requirements.txt` |
+
+### Installation
+
+1. Clone the repository:
+
+```powershell
+git clone https://github.com/FernandoR7/ai-doc-assistant.git
+cd ai-doc-assistant
+```
+
+2. Create and activate a virtual environment:
 
 ```powershell
 python -m venv .venv
 & .\.venv\Scripts\Activate.ps1
 ```
 
-### 2. Instalar dependencias
+3. Install dependencies:
 
 ```powershell
 pip install -r requirements.txt
 ```
 
-### 3. Indexar os documentos
+## Usage
+
+### 1. Add your documents
+
+Place supported files inside `data/docs`:
+
+- `notes.txt`
+- `guide.md`
+- `manual.pdf`
+
+### 2. Index the knowledge base
+
+Run the ingestion script:
 
 ```powershell
 python scripts/ingest_docs.py --debug
 ```
 
-### 4. Subir a API
+Default file patterns:
+
+```text
+**/*.txt
+**/*.md
+**/*.pdf
+```
+
+Optional custom filtering:
+
+```powershell
+python scripts/ingest_docs.py --patterns **/*.md **/*.pdf --debug
+```
+
+### 3. Start the API
 
 ```powershell
 $env:APP_DEBUG='1'
 python -m uvicorn app.main:app --reload
 ```
 
-### 5. Testar
-
-Swagger:
+### 4. Open Swagger UI
 
 ```text
 http://127.0.0.1:8000/docs
 ```
 
-Exemplo de request:
+## API Endpoints
+
+### `GET /health`
+
+Basic health check:
+
+```json
+{
+  "status": "ok"
+}
+```
+
+### `POST /ask`
+
+Request body:
 
 ```json
 {
@@ -130,7 +205,7 @@ Exemplo de request:
 }
 ```
 
-Exemplo de resposta:
+Example response:
 
 ```json
 {
@@ -138,67 +213,58 @@ Exemplo de resposta:
 }
 ```
 
-## Endpoints
+## Observability
 
-### Health check
+This project was intentionally instrumented to make the full RAG flow visible.
 
-```http
-GET /health
-```
+### Ingestion logs include
 
-### Perguntas
+- matched files per pattern
+- loaded documents per format
+- chunk counts
+- persistence target path
+- common failures such as missing folders, blocked database files, and loader issues
 
-```http
-POST /ask
-Content-Type: application/json
-```
+### Application logs include
 
-## Observabilidade e debug
+- FastAPI startup
+- LLM initialization
+- retriever setup
+- retrieved document previews
+- prompt preview and size
+- generation output preview
+- HTTP request duration
 
-Este projeto foi instrumentado para facilitar acompanhamento do processo inteiro.
-
-### Na ingestao
-
-- arquivos encontrados
-- documentos carregados
-- quantidade de chunks
-- persistencia no ChromaDB
-- erros de caminho, encoding e banco bloqueado
-
-### Na aplicacao
-
-- inicializacao do app
-- carregamento do modelo
-- criacao do retriever
-- documentos recuperados
-- preview do prompt
-- resposta gerada
-- tempo total da request HTTP
-
-Para ativar logs mais detalhados na API:
+Enable verbose application logs with:
 
 ```powershell
 $env:APP_DEBUG='1'
 ```
 
-## O que este projeto demonstra
+## Supported Document Types
 
-- construcao de um fluxo RAG do zero
-- organizacao por responsabilidades
-- integracao entre API, vector store e modelo local
-- preocupacao com debuggabilidade e manutencao
-- documentacao orientada a diferentes publicos
+| Format | Loader | Notes |
+| --- | --- | --- |
+| `.txt` | `TextLoader` | Loaded as UTF-8 text by default |
+| `.md` | `TextLoader` | Markdown is indexed as plain text content |
+| `.pdf` | `PyPDFLoader` | Extracted text is indexed page-by-page before chunking |
 
-## Melhorias futuras
+## Documentation
 
-- suporte a Markdown e PDF na ingestao
-- retorno de fontes no endpoint
-- avaliacao automatica da qualidade das respostas
-- troca do modelo por uma opcao mais forte em portugues
-- testes automatizados para ingestao e API
-
-## Documentacao complementar
+Additional project guides are available in `docs/`:
 
 - `docs/rag_tecnico.md`
 - `docs/rag_para_leigos.md`
 - `docs/rag_didatico_exemplos.md`
+
+## Roadmap
+
+- Return source documents in the API response for traceability
+- Add OCR support for scanned PDFs
+- Improve Portuguese generation quality with a stronger local model
+- Add automated tests for ingestion and API behavior
+- Move runtime settings to environment variables
+
+## License
+
+This project is available under the MIT License.

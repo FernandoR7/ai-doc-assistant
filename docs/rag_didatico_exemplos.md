@@ -32,6 +32,12 @@ Sua agenda pode ter anotacoes assim:
 
 No projeto, os documentos funcionam como essa agenda.
 
+Esses documentos podem estar em formatos diferentes:
+
+- um `.txt` com anotacoes rapidas
+- um `.md` com topicos organizados
+- um `.pdf` com material exportado
+
 ## 2. Dividir em chunks e como separar a agenda por blocos
 
 Em vez de olhar o dia inteiro de uma vez, voce pode separar em blocos:
@@ -149,9 +155,19 @@ O que eu faco a noite?
 A noite voce janta e depois dorme.
 ```
 
+## E onde entram Markdown e PDF?
+
+Pense assim:
+
+- `.txt` = um bilhete simples
+- `.md` = uma agenda mais organizada, com titulos e listas
+- `.pdf` = uma apostila ou manual impresso
+
+Mesmo sendo formatos diferentes, todos viram texto consultavel para o sistema.
+
 ## Onde isso aparece no projeto
 
-- `scripts/ingest_docs.py`: prepara e indexa os textos
+- `scripts/ingest_docs.py`: prepara e indexa textos, Markdown e PDFs
 - `app/embeddings.py`: transforma texto em vetores
 - `app/vector_store.py`: guarda e busca os vetores
 - `app/rag_chain.py`: junta busca + prompt + modelo

@@ -5,7 +5,7 @@ from pathlib import Path
 from shutil import rmtree
 
 from langchain_chroma import Chroma
-from langchain_community.document_loaders import DirectoryLoader, TextLoader
+from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -18,6 +18,27 @@ from app.embeddings import get_embeddings
 DOCS_PATH = PROJECT_ROOT / "data" / "docs"
 CHROMA_PATH = PROJECT_ROOT / "chroma_db"
 LOGGER = logging.getLogger("ingest")
+
+SUPPORTED_PATTERNS = {
+    ".txt": {
+        "glob": "**/*.txt",
+        "loader_cls": TextLoader,
+        "loader_kwargs": lambda encoding: {"encoding": encoding},
+        "label": "texto",
+    },
+    ".md": {
+        "glob": "**/*.md",
+        "loader_cls": TextLoader,
+        "loader_kwargs": lambda encoding: {"encoding": encoding},
+        "label": "markdown",
+    },
+    ".pdf": {
+        "glob": "**/*.pdf",
+        "loader_cls": PyPDFLoader,
+        "loader_kwargs": lambda encoding: {},
+        "label": "pdf",
+    },
+}
 
 
 def parse_args():
@@ -35,14 +56,15 @@ def parse_args():
         help="Pasta de persistencia do ChromaDB."
     )
     parser.add_argument(
-        "--glob",
-        default="**/*.txt",
-        help="Padrao de arquivos para ingestao."
+        "--patterns",
+        nargs="+",
+        default=[config["glob"] for config in SUPPORTED_PATTERNS.values()],
+        help="Padroes de arquivos para ingestao. Exemplo: **/*.txt **/*.md **/*.pdf"
     )
     parser.add_argument(
         "--encoding",
-        default="utf-8",
-        help="Encoding usado ao ler os arquivos."
+        default="utf-8-sig",
+        help="Encoding usado ao ler arquivos de texto."
     )
     parser.add_argument(
         "--chunk-size",
@@ -100,13 +122,33 @@ def ensure_docs_path(docs_path: Path):
         )
 
 
-def list_candidate_files(docs_path: Path, pattern: str):
-    files = sorted(path for path in docs_path.glob(pattern) if path.is_file())
-    if not files:
+def resolve_pattern_config(pattern: str):
+    for suffix, config in SUPPORTED_PATTERNS.items():
+        if pattern.endswith(suffix):
+            return config
+    raise ValueError(
+        f"Padrao nao suportado: {pattern}. Use apenas .txt, .md ou .pdf."
+    )
+
+
+def list_candidate_files(docs_path: Path, patterns: list[str]):
+    files_by_pattern = {}
+
+    # Mapeia os arquivos por padrao para termos controle fino do que sera indexado.
+    for pattern in patterns:
+        matched_files = sorted(path for path in docs_path.glob(pattern) if path.is_file())
+        files_by_pattern[pattern] = matched_files
+        LOGGER.info("Arquivos encontrados para %s: %s", pattern, len(matched_files))
+        for file_path in matched_files:
+            LOGGER.debug("Arquivo candidato: %s", file_path)
+
+    total_files = sum(len(files) for files in files_by_pattern.values())
+    if total_files == 0:
         raise FileNotFoundError(
-            f"Nenhum arquivo encontrado em {docs_path} com o padrao {pattern!r}"
+            f"Nenhum arquivo encontrado em {docs_path} com os padroes {patterns!r}"
         )
-    return files
+
+    return files_by_pattern
 
 
 def reset_chroma(chroma_path: Path, keep_db: bool):
@@ -125,25 +167,43 @@ def reset_chroma(chroma_path: Path, keep_db: bool):
             ) from exc
 
 
-def load_documents(docs_path: Path, pattern: str, encoding: str):
-    LOGGER.info("Carregando documentos de %s com padrao %s", docs_path, pattern)
+def load_documents_for_pattern(docs_path: Path, pattern: str, encoding: str):
+    config = resolve_pattern_config(pattern)
+    loader_kwargs = config["loader_kwargs"](encoding)
 
+    # Cada formato usa seu loader especifico, mas o resultado final vira uma unica lista.
     loader = DirectoryLoader(
         str(docs_path),
         glob=pattern,
-        loader_cls=TextLoader,
-        loader_kwargs={"encoding": encoding}
+        loader_cls=config["loader_cls"],
+        loader_kwargs=loader_kwargs,
     )
     documents = loader.load()
 
-    if not documents:
-        raise RuntimeError("O loader retornou zero documentos.")
-
-    LOGGER.info("Documentos carregados: %s", len(documents))
+    LOGGER.info(
+        "Documentos carregados para %s (%s): %s",
+        pattern,
+        config["label"],
+        len(documents)
+    )
     for document in documents:
         source = document.metadata.get("source", "<sem source>")
         LOGGER.debug("Documento carregado: %s (%s chars)", source, len(document.page_content))
 
+    return documents
+
+
+def load_documents(docs_path: Path, patterns: list[str], encoding: str):
+    documents = []
+
+    # Carrega cada formato separadamente para manter o processo observavel e rastreavel.
+    for pattern in patterns:
+        documents.extend(load_documents_for_pattern(docs_path, pattern, encoding))
+
+    if not documents:
+        raise RuntimeError("Os loaders retornaram zero documentos.")
+
+    LOGGER.info("Documentos carregados no total: %s", len(documents))
     return documents
 
 
@@ -154,6 +214,7 @@ def split_documents(documents, chunk_size: int, chunk_overlap: int):
         chunk_overlap
     )
 
+    # O chunking prepara o material para busca semantica sem perder muito contexto.
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap
@@ -176,6 +237,7 @@ def persist_chunks(chunks, chroma_path: Path):
     LOGGER.info("Inicializando embeddings")
     embeddings = get_embeddings()
 
+    # A persistencia no Chroma finaliza a etapa de indexacao e prepara a busca vetorial.
     LOGGER.info("Persistindo chunks em %s", chroma_path)
     Chroma.from_documents(
         documents=chunks,
@@ -196,15 +258,12 @@ def main():
         LOGGER.debug("PROJECT_ROOT=%s", PROJECT_ROOT)
         LOGGER.debug("DOCS_PATH=%s", docs_path)
         LOGGER.debug("CHROMA_PATH=%s", chroma_path)
+        LOGGER.debug("PATTERNS=%s", args.patterns)
 
         ensure_docs_path(docs_path)
-        candidate_files = list_candidate_files(docs_path, args.glob)
-        LOGGER.info("Arquivos candidatos: %s", len(candidate_files))
-        for file_path in candidate_files:
-            LOGGER.debug("Arquivo candidato: %s", file_path)
-
+        list_candidate_files(docs_path, args.patterns)
         reset_chroma(chroma_path, args.keep_db)
-        documents = load_documents(docs_path, args.glob, args.encoding)
+        documents = load_documents(docs_path, args.patterns, args.encoding)
         chunks = split_documents(
             documents,
             chunk_size=args.chunk_size,

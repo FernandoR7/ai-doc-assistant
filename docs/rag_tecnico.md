@@ -23,15 +23,31 @@ Arquivo: `scripts/ingest_docs.py`
 Responsabilidades:
 
 - carregar os arquivos de `data/docs`
+- suportar `.txt`, `.md` e `.pdf`
 - dividir o conteudo em partes menores
 - gerar embeddings
 - persistir tudo em `chroma_db`
 
 Detalhes importantes:
 
-- o loader esta configurado para ler `.txt`
-- a leitura e feita em `utf-8`
-- o banco vetorial e recriado a cada ingestao
+- `.txt` e `.md` usam `TextLoader`
+- `.pdf` usa `PyPDFLoader`
+- a leitura dos arquivos de texto e feita em `utf-8`
+- o banco vetorial e recriado a cada ingestao, a menos que `--keep-db` seja usado
+- a CLI aceita `--patterns` para filtrar formatos ou pastas
+
+### Como a ingestao foi organizada
+
+O script foi dividido em blocos claros:
+
+- validacao da pasta de entrada
+- mapeamento dos arquivos por padrao
+- reset opcional do ChromaDB
+- carga dos documentos por formato
+- chunking
+- persistencia final
+
+Essa separacao melhora a manutencao e facilita identificar em que etapa um erro ocorreu.
 
 ## Embeddings
 
@@ -66,7 +82,7 @@ O retriever esta configurado com `k=3`, entao ele tenta retornar os 3 chunks mai
 
 Arquivo: `app/rag_chain.py`
 
-O chain faz a uniao de:
+O fluxo principal faz a uniao de:
 
 - modelo de linguagem
 - retriever
@@ -77,7 +93,13 @@ Prompt atual:
 - instrui o modelo a responder com base no contexto fornecido
 - pede para admitir quando a resposta nao estiver no contexto
 
-Esse ponto e central: sem prompt claro, o modelo tende a improvisar mais do que deveria.
+O modulo tambem foi instrumentado com logs para mostrar:
+
+- pergunta recebida
+- documentos recuperados
+- preview do contexto
+- tamanho do prompt
+- finalizacao da pipeline
 
 ## Modelo de linguagem
 
@@ -94,6 +116,7 @@ Responsabilidades do wrapper:
 - tokenizar o prompt
 - chamar `generate()`
 - decodificar a saida
+- logar tamanho do prompt, quantidade de tokens e saida gerada
 
 ## API
 
@@ -125,7 +148,7 @@ Exemplo de resposta:
 ### Indexacao
 
 ```text
-docs -> loader -> splitter -> embeddings -> ChromaDB
+docs (.txt/.md/.pdf) -> loader por formato -> splitter -> embeddings -> ChromaDB
 ```
 
 ### Consulta
@@ -134,23 +157,47 @@ docs -> loader -> splitter -> embeddings -> ChromaDB
 pergunta -> embedding da pergunta -> busca no Chroma -> contexto -> LLM -> resposta
 ```
 
+## Observabilidade
+
+O projeto foi preparado para mostrar o processo inteiro no terminal.
+
+### Na ingestao
+
+- quantidade de arquivos por padrao
+- quantidade de documentos por formato
+- preview de documentos e chunks
+- caminho do banco vetorial
+
+### Na aplicacao
+
+- subida do app
+- criacao do vector store
+- inicializacao do modelo
+- documentos recuperados
+- prompt montado
+- resposta gerada
+- tempo da request HTTP
+
 ## Pontos fortes
 
 - simples de entender
 - facil de testar localmente
 - separacao clara entre ingestao, retrieval e resposta
+- suporta multiplos formatos de documento
+- tem logs suficientes para debug real
 
 ## Limitacoes atuais
 
-- so indexa arquivos `.txt`
+- Markdown e indexado como texto puro
+- PDF depende da qualidade do texto extraido
 - o modelo local pode gerar texto ruim em portugues
 - nao ha retorno de fontes no endpoint
-- nao ha validacao de qualidade da resposta
+- nao ha validacao automatica de qualidade da resposta
 
 ## Melhorias tecnicas recomendadas
 
-1. Suportar `.md` e outros formatos na ingestao.
-2. Retornar `source_documents` para debug.
+1. Retornar `source_documents` no endpoint.
+2. Adicionar suporte a OCR para PDFs escaneados.
 3. Trocar o modelo por um melhor para portugues.
 4. Adicionar testes para ingestao, retrieval e endpoint.
 5. Separar configuracoes em variaveis de ambiente.
