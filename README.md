@@ -11,54 +11,54 @@
 </div>
 
 <div align="center">
-  <h3>Local RAG assistant for querying TXT, Markdown, and PDF documents through a FastAPI API.</h3>
+  <h3>Assistente RAG local para consultar documentos TXT, Markdown e PDF por meio de uma API FastAPI.</h3>
 </div>
 
 ---
 
-## Quick Links
+## Links Rápidos
 
-- [Introduction](#introduction)
-- [Features](#features)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [Usage](#usage)
-- [API Endpoints](#api-endpoints)
-- [Observability](#observability)
-- [Documentation](#documentation)
+- [Introdução](#introdução)
+- [Funcionalidades](#funcionalidades)
+- [Estrutura do Projeto](#estrutura-do-projeto)
+- [Como Executar](#como-executar)
+- [Uso](#uso)
+- [Endpoints da API](#endpoints-da-api)
+- [Observabilidade](#observabilidade)
+- [Documentação](#documentação)
 - [Roadmap](#roadmap)
 
-## Introduction
+## Introdução
 
-AI Doc Assistant is a portfolio project focused on building a local Retrieval-Augmented Generation pipeline with clear architecture and practical debugging support.
+AI Doc Assistant é um projeto de portfólio focado em construir um pipeline local de Retrieval-Augmented Generation com arquitetura clara e suporte prático para debug.
 
-The application indexes documents stored in `data/docs`, transforms them into embeddings, persists them in ChromaDB, retrieves the most relevant chunks for a user question, and generates a final answer through a FastAPI API.
+A aplicação indexa documentos armazenados em `data/docs`, transforma o conteúdo em embeddings, persiste os vetores no ChromaDB, recupera os chunks mais relevantes para uma pergunta do usuário e gera uma resposta final por meio de uma API FastAPI.
 
-### Why this project matters
+### Por que este projeto importa
 
-- It demonstrates a complete RAG workflow instead of a toy endpoint.
-- It supports multiple document formats: `.txt`, `.md`, and `.pdf`.
-- It was organized to be easy to inspect, debug, and evolve.
-- It includes technical, non-technical, and didactic documentation.
+- Demonstra um fluxo completo de RAG em vez de um endpoint de exemplo.
+- Suporta múltiplos formatos de documento: `.txt`, `.md` e `.pdf`.
+- Foi organizado para ser fácil de inspecionar, depurar e evoluir.
+- Inclui documentação técnica, explicação para leigos e explicação didática.
 
-## Features
+## Funcionalidades
 
-| Feature | Description |
+| Funcionalidade | Descrição |
 | --- | --- |
-| Multi-format ingestion | Indexes `.txt`, `.md`, and `.pdf` documents from `data/docs`. |
-| Local vector search | Uses sentence-transformer embeddings with ChromaDB for similarity retrieval. |
-| API interface | Exposes a FastAPI app with `/health` and `/ask` endpoints. |
-| End-to-end logging | Tracks ingestion, retrieval, prompt construction, generation, and request timing. |
-| Configurable ingestion | Supports custom patterns, chunk size, overlap, and database reset control. |
-| Portfolio-ready docs | Includes README plus technical, beginner-friendly, and didactic explanations. |
+| Ingestão multi-formato | Indexa documentos `.txt`, `.md` e `.pdf` a partir de `data/docs`. |
+| Busca vetorial local | Usa embeddings com `sentence-transformers` e ChromaDB para recuperação semântica. |
+| Interface por API | Expõe uma aplicação FastAPI com endpoints `/health` e `/ask`. |
+| Logs de ponta a ponta | Rastreia ingestão, retrieval, montagem de prompt, geração e tempo da request. |
+| Ingestão configurável | Permite ajustar padrões de arquivo, chunk size, overlap e controle do banco vetorial. |
+| Documentação de portfólio | Inclui README e guias técnico, leigo e didático. |
 
-## Architecture
+## Arquitetura
 
 ```text
-Documents (.txt, .md, .pdf)
+Documentos (.txt, .md, .pdf)
         |
         v
-Ingestion + Chunking
+Ingestão + Chunking
         |
         v
 Embeddings
@@ -70,16 +70,16 @@ ChromaDB
 Retriever
         |
         v
-Prompt + Context
+Prompt + Contexto
         |
         v
-Local LLM
+LLM local
         |
         v
-FastAPI Response
+Resposta pela API
 ```
 
-## Project Structure
+## Estrutura do Projeto
 
 ```text
 AI project/
@@ -106,57 +106,57 @@ AI project/
 `-- README.md
 ```
 
-## Getting Started
+## Como Executar
 
-### Prerequisites
+### Pré-requisitos
 
-| Requirement | Version / Notes |
+| Requisito | Versão / Observação |
 | --- | --- |
-| Python | 3.11+ recommended |
-| OS | Tested on Windows PowerShell |
-| Dependencies | Installed from `requirements.txt` |
+| Python | 3.11+ recomendado |
+| Sistema | Testado em Windows PowerShell |
+| Dependências | Instaladas via `requirements.txt` |
 
-### Installation
+### Instalação
 
-1. Clone the repository:
+1. Clone o repositório:
 
 ```powershell
 git clone https://github.com/FernandoR7/ai-doc-assistant.git
 cd ai-doc-assistant
 ```
 
-2. Create and activate a virtual environment:
+2. Crie e ative um ambiente virtual:
 
 ```powershell
 python -m venv .venv
 & .\.venv\Scripts\Activate.ps1
 ```
 
-3. Install dependencies:
+3. Instale as dependências:
 
 ```powershell
 pip install -r requirements.txt
 ```
 
-## Usage
+## Uso
 
-### 1. Add your documents
+### 1. Adicione seus documentos
 
-Place supported files inside `data/docs`:
+Coloque arquivos suportados dentro de `data/docs`:
 
 - `notes.txt`
 - `guide.md`
 - `manual.pdf`
 
-### 2. Index the knowledge base
+### 2. Indexe a base de conhecimento
 
-Run the ingestion script:
+Execute o script de ingestão:
 
 ```powershell
 python scripts/ingest_docs.py --debug
 ```
 
-Default file patterns:
+Padrões de arquivo usados por padrão:
 
 ```text
 **/*.txt
@@ -164,30 +164,30 @@ Default file patterns:
 **/*.pdf
 ```
 
-Optional custom filtering:
+Filtrando formatos específicos:
 
 ```powershell
 python scripts/ingest_docs.py --patterns **/*.md **/*.pdf --debug
 ```
 
-### 3. Start the API
+### 3. Inicie a API
 
 ```powershell
 $env:APP_DEBUG='1'
 python -m uvicorn app.main:app --reload
 ```
 
-### 4. Open Swagger UI
+### 4. Abra o Swagger UI
 
 ```text
 http://127.0.0.1:8000/docs
 ```
 
-## API Endpoints
+## Endpoints da API
 
 ### `GET /health`
 
-Basic health check:
+Health check básico:
 
 ```json
 {
@@ -197,61 +197,61 @@ Basic health check:
 
 ### `POST /ask`
 
-Request body:
+Corpo da request:
 
 ```json
 {
-  "question": "What is FastAPI?"
+  "question": "O que é FastAPI?"
 }
 ```
 
-Example response:
+Exemplo de resposta:
 
 ```json
 {
-  "answer": "FastAPI e um framework moderno para construcao de APIs com Python."
+  "answer": "FastAPI é um framework moderno para construção de APIs com Python."
 }
 ```
 
-## Observability
+## Observabilidade
 
-This project was intentionally instrumented to make the full RAG flow visible.
+Este projeto foi instrumentado para tornar visível o fluxo completo do RAG.
 
-### Ingestion logs include
+### Os logs da ingestão mostram
 
-- matched files per pattern
-- loaded documents per format
-- chunk counts
-- persistence target path
-- common failures such as missing folders, blocked database files, and loader issues
+- arquivos encontrados por padrão
+- documentos carregados por formato
+- quantidade de chunks
+- caminho de persistência no banco vetorial
+- falhas comuns como pasta inexistente, banco bloqueado e problemas de loader
 
-### Application logs include
+### Os logs da aplicação mostram
 
-- FastAPI startup
-- LLM initialization
-- retriever setup
-- retrieved document previews
-- prompt preview and size
-- generation output preview
-- HTTP request duration
+- inicialização do FastAPI
+- carregamento do LLM
+- criação do retriever
+- preview dos documentos recuperados
+- preview e tamanho do prompt
+- preview da resposta gerada
+- tempo total da request HTTP
 
-Enable verbose application logs with:
+Ative logs mais detalhados da aplicação com:
 
 ```powershell
 $env:APP_DEBUG='1'
 ```
 
-## Supported Document Types
+## Tipos de Documento Suportados
 
-| Format | Loader | Notes |
+| Formato | Loader | Observações |
 | --- | --- | --- |
-| `.txt` | `TextLoader` | Loaded as UTF-8 text by default |
-| `.md` | `TextLoader` | Markdown is indexed as plain text content |
-| `.pdf` | `PyPDFLoader` | Extracted text is indexed page-by-page before chunking |
+| `.txt` | `TextLoader` | Lido como texto UTF-8 por padrão |
+| `.md` | `TextLoader` | Markdown é indexado como texto puro |
+| `.pdf` | `PyPDFLoader` | O texto extraído entra na base antes do chunking |
 
-## Documentation
+## Documentação
 
-Additional project guides are available in `docs/`:
+Guias adicionais disponíveis em `docs/`:
 
 - `docs/rag_tecnico.md`
 - `docs/rag_para_leigos.md`
@@ -259,12 +259,12 @@ Additional project guides are available in `docs/`:
 
 ## Roadmap
 
-- Return source documents in the API response for traceability
-- Add OCR support for scanned PDFs
-- Improve Portuguese generation quality with a stronger local model
-- Add automated tests for ingestion and API behavior
-- Move runtime settings to environment variables
+- Retornar documentos-fonte na resposta da API para rastreabilidade
+- Adicionar suporte a OCR para PDFs escaneados
+- Melhorar a qualidade de geração em português com um modelo local mais forte
+- Adicionar testes automatizados para ingestão e comportamento da API
+- Mover configurações para variáveis de ambiente
 
-## License
+## Licença
 
-This project is available under the MIT License.
+Este projeto está disponível sob a licença MIT.
